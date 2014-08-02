@@ -1,0 +1,4 @@
+node_modules/
+lib/credentials.js
+server.crt
+server.key
