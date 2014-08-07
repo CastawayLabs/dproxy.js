@@ -5,6 +5,7 @@ var config = require('../lib/config')
 	, proxy = dproxy.Proxy
 	, client = dproxy.client
 	, fs = require('fs')
+	, path = require('path')
 	, async = require('async');
 
 var request = require('supertest');
@@ -16,7 +17,7 @@ if (!process.env.TEST) {
 }
 
 var httpString = 'http://127.0.0.1:'+config.proxyPort;
-var httpsString = 'https://127.0.0.1:'+config.proxyPorts;
+var httpsString = 'https://localhost:'+config.proxyPorts;
 
 should(process.env.TEST).be.ok;
 
@@ -24,8 +25,9 @@ describe('test http', function() {
 	beforeEach(function () {
 		client.del('proxy:domain_details_127.0.0.1', function (err) {
 			if (err) throw err;
-		})
-	})
+		});
+	});
+
 	var apps = [
 		{
 			port: 1337,
@@ -48,5 +50,54 @@ describe('test http', function() {
 				.expect('Hello World\n')
 				.end(done);
 		});
+	});
+});
+
+describe('test https', function () {
+	beforeEach(function () {
+		client.del('proxy:domain_details_localhost', function (err) {
+			if (err) throw err;
+		});
+		client.del('proxy:domain_ssl_localhost', function (err) {
+			if (err) throw err;
+		});
+	});
+
+	var apps = [
+		{
+			port: 1337,
+			hostname: 'localhost'
+		}
+	];
+
+	it('tests TLS 404', function (done) {
+		request(httpsString).get('/')
+			.expect(404)
+			.end(done);
+	});
+
+	it('adds the app and SSL to redis and tests the request', function (done) {
+		async.parallel([
+			function (done) {
+				client.hmset('proxy:domain_details_localhost', 'apps', JSON.stringify(apps), function (err, status) {
+					done(err);
+				});
+			},
+			function (done) {
+				var crt = fs.readFileSync(path.join(__dirname, '..', 'test_files', 'localhost.crt'), 'utf8');
+				var key = fs.readFileSync(path.join(__dirname, '..', 'test_files', 'localhost.key'), 'utf8');
+				
+				client.hmset('proxy:domain_ssl_localhost', 'crt', crt, 'key', key, function (err) {
+					done(err);
+				})
+			}
+		], function (err) {
+			if (err) throw err;
+
+			request(httpsString).get('/')
+				.expect(200)
+				.expect('Hello World\n')
+				.end(done);
+		})
 	});
 });
