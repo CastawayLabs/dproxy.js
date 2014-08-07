@@ -32,6 +32,7 @@ Features:
 - [x] HTTP-ready
 - [x] HTTPs-ready
 - [x] TCP, Websocket, TLS support
+- [ ] Request Statistics (read below)
 
 Basically any tcp requests that share hostname in the first few lines will get properly proxied to the target application.
 
@@ -61,6 +62,23 @@ JSON.stringify([{
 ```
 
 Refer to the tests for further details, create an issue or contact us.
+
+Request analytics
+-----------------
+
+__note, this feature is not done yet__
+
+By default, all request will be logged via redis pub/sub or into the redis database, where a daemon service picks it up.
+
+Recorded parameters:
+
+- IP Address
+- Proxy information (if the user is behind a proxy, an array of ips is available)
+- Request time
+- Target ID
+- Time and date of request
+- Request size (bytes) - (note, in case of TLS, the encrypted request is recorded)
+- Response size (bytes)
 
 Development is Sponsored By NodeGear
 ------------------------------------
