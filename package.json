@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "start": "bin/dproxy"
+    "start": "bin/dproxy",
+    "test": "NODE_TLS_REJECT_UNAUTHORIZED=0 ./node_modules/.bin/mocha"
   },
   "dependencies": {
     "async": "latest",
@@ -13,6 +14,7 @@
   },
   "devDependencies": {
     "should": "latest",
-    "supertest": "latest"
+    "supertest": "latest",
+    "mocha": "latest"
   }
 }
