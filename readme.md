@@ -5,11 +5,11 @@ Fast, Lightweight, Dynamic.
 
 node.js reverse proxy driven by `redis`.
 
-How is it faster
+dproxy is faster
 ----------------
 
-- `dproxy` abstracts from http to raw tcp/tls
-- Uses `redis` for dynamic hostname lookup
+- It abstracts from http to raw tcp/tls, does minimal parsing. Once it gets the HOST header, it stops caring and just passes on the request.
+- Uses `redis` for dynamic hostname lookup. It has no configuration files (apart from redis config)
 - Does not modify the content of the request
 
 Its just a fast transparent proxy, with dynamic hostname lookup and SNI support. Nothing fancy [yet].
@@ -17,31 +17,36 @@ Its just a fast transparent proxy, with dynamic hostname lookup and SNI support.
 How it works
 ------------
 
-Requriements
+> .. it just does .. __this section isn't complete :)__
+
+Requirements
 ------------
 
-If you want to use SSL. SNI was recently introduced into TLS, therefore you must use the `node v0.11.x` version.
+- `node v0.11.x` if you want to use SSL, as SNI was recently introduced into the TLS module.
+- `lib/credentials.js` file (copy from `lib/credentials-test.js`) and customise to your liking
 
 Features:
 ---------
 
 - [x] Production-tested at NodeGear
 - [x] SSL Termination
+- [ ] SSL Redirect
 - [x] Load Balancing
 - [x] Dynamic Routing
 - [x] HTTP-ready
 - [x] HTTPs-ready
 - [x] TCP, Websocket, TLS support
-- [ ] Request Statistics (read below)
+- [ ] Request Statistics (read Request Analytics section)
 
 Basically any tcp requests that share hostname in the first few lines will get properly proxied to the target application.
 
-Unlike nginx or node-http-proxy, this is capable of proxying just about anything, dynamically.
+Unlike `nginx` or `node-http-proxy`, this is capable of proxying just about anything that is TCP, dynamically and without configuration files.
 
 Redis
 -----
 - HASH `proxy:domain_ssl_{hostname}`
 - HASH `proxy:domain_details_{hostname}`
+- SET  `proxy:domain_members_{hostname}`
 
 **Setup**
 
@@ -51,22 +56,22 @@ Example for domain `foo.bar`
 
 `proxy:domain_details_foo.bar`:
 
-1. `apps` to a json array.
-Example: (javascript)
+- `ssl`: true/false
+- `ssl_only`: true/false
 
-```javascript
-JSON.stringify([{
-	port: 8888,
-	host: '127.0.0.1'
-}])
-```
+`proxy:domain_members_foo.bar`:
+
+This is a set of JSON-encoded members. Add more members to load-balance the domain to different hosts. A member should consist of the following properties:
+
+- `port`: 9999
+- `host`: '127.0.0.1'
 
 Refer to the tests for further details, create an issue or contact us.
 
 Request analytics
 -----------------
 
-__note, this feature is not done yet__
+> note, this feature is not done yet
 
 By default, all request will be logged via redis pub/sub or into the redis database, where a daemon service picks it up.
 
@@ -79,6 +84,15 @@ Recorded parameters:
 - Time and date of request
 - Request size (bytes) - (note, in case of TLS, the encrypted request is recorded)
 - Response size (bytes)
+
+Tests
+-----
+
+Export `TEST` variable into the environment, run a local REDIS server. Be aware it erases its `proxy:...` keys during the test.
+
+Run tests with `mocha`.
+
+The HTTPs tests will fail if you don't add local certificates (as the HTTPs server doesn't run).
 
 Development is Sponsored By NodeGear
 ------------------------------------

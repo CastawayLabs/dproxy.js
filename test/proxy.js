@@ -23,17 +23,18 @@ should(process.env.TEST).be.ok;
 
 describe('test http', function() {
 	beforeEach(function () {
-		client.del('proxy:domain_details_127.0.0.1', function (err) {
+		client.multi()
+		.del('proxy:domain_details_127.0.0.1')
+		.del('proxy:domain_members_127.0.0.1')
+		.exec(function (err) {
 			if (err) throw err;
 		});
 	});
 
-	var apps = [
-		{
-			port: 1337,
-			hostname: '127.0.0.1'
-		}
-	];
+	var member = {
+		port: 1337,
+		hostname: '127.0.0.1'
+	}
 
 	it('should return a 404', function (done) {
 		request(httpString).get('/')
@@ -42,13 +43,69 @@ describe('test http', function() {
 	});
 
 	it('adds the app to redis and tests the request', function (done) {
-		client.hmset('proxy:domain_details_127.0.0.1', 'apps', JSON.stringify(apps), function (err, status) {
-			if (err) throw err;
+		client.multi()
+		.hmset('proxy:domain_details_127.0.0.1', 'ssl', false, 'ssl_only', false)
+		.sadd('proxy:domain_members_127.0.0.1', JSON.stringify(member))
+		.exec(function (err) {
+			should(err).be.null;
 
 			request(httpString).get('/')
 				.expect(200)
 				.expect('Hello World\n')
 				.end(done);
+		})
+	});
+
+	it('adds the app to redis and test invalid ownership', function (done) {
+		member.owner = 'nobody';
+
+		client.multi()
+		.hmset('proxy:domain_details_127.0.0.1', 'ssl', false, 'ssl_only', false, 'owner', 'mocha')
+		.del('proxy:domain_members_127.0.0.1')
+		.sadd('proxy:domain_members_127.0.0.1', JSON.stringify(member))
+		.exec(function (err) {
+			should(err).be.null;
+
+			request(httpString).get('/')
+				.expect(404)
+				.end(function (err) {
+					should(err).be.null;
+
+					// Test that the SET now has 0 members
+					client.smembers('proxy:domain_members_127.0.0.1', function (err, members) {
+						should(err).be.null;
+						members.should.have.lengthOf(0);
+
+						done();
+					})
+				});
+		});
+	});
+
+	it('adds the app to redis and test correct ownership', function (done) {
+		member.owner = 'mocha';
+
+		client.multi()
+		.hmset('proxy:domain_details_127.0.0.1', 'ssl', false, 'ssl_only', false, 'owner', 'mocha')
+		.del('proxy:domain_members_127.0.0.1')
+		.sadd('proxy:domain_members_127.0.0.1', JSON.stringify(member))
+		.exec(function (err) {
+			should(err).be.null;
+
+			request(httpString).get('/')
+				.expect(200)
+				.expect('Hello World\n')
+				.end(function (err) {
+					should(err).be.null;
+
+					// Test that the SET still has 1 member
+					client.smembers('proxy:domain_members_127.0.0.1', function (err, members) {
+						should(err).be.null;
+						members.should.have.lengthOf(1);
+
+						done();
+					})
+				});
 		});
 	});
 });
