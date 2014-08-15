@@ -11,6 +11,7 @@ dproxy is faster
 - It abstracts from http to raw tcp/tls, does minimal parsing. Once it gets the HOST header, it stops caring and just passes on the request.
 - Uses `redis` for dynamic hostname lookup. It has no configuration files (apart from redis config)
 - Does not modify the content of the request
+- During normal browsing, the connection is kept with the target.. That results in ~2 proxy requests per user and the user can then view additional pages without further lookup.
 
 Its just a fast transparent proxy, with dynamic hostname lookup and SNI support. Nothing fancy [yet].
 
@@ -93,6 +94,8 @@ Export `TEST` variable into the environment, run a local REDIS server. Be aware 
 Run tests with `mocha`.
 
 The HTTPs tests will fail if you don't add local certificates (as the HTTPs server doesn't run).
+
+On google compute instance `n1-standard-1`, the proxy added ~2 ms of delay to each request. This was partially because the redis server was on another instance (ping ~0.7ms).
 
 Development is Sponsored By NodeGear
 ------------------------------------
