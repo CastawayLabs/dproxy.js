@@ -40,12 +40,8 @@ describe('test https', function () {
 
 	it('tests TLS 404', function (done) {
 		request(httpsString).get('/')
-			.end(function (err) {
-				// The socket will reset
-
-				should(err).not.be.null;
-				done();
-			});
+			.expect(404)
+			.end(done);
 	});
 
 	it('adds the app and SSL to redis and tests the request', function (done) {
