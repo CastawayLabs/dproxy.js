@@ -31,7 +31,7 @@ Features:
 
 - [x] Production-tested at NodeGear
 - [x] SSL Termination
-- [ ] SSL Redirect
+- [x] SSL Redirect
 - [x] Load Balancing
 - [x] Dynamic Routing
 - [x] HTTP-ready
@@ -72,17 +72,23 @@ Refer to the tests for further details, create an issue or contact us.
 Request analytics
 -----------------
 
-> note, this feature is not done yet
+> note, this feature is partially done
 
-By default, all request will be logged via redis pub/sub or into the redis database, where a daemon service picks it up.
+Request statistics are sent to a `statsd` server.
+
+`dproxy -> statsd -> carbon [-> graphite]`
+
+You can visualise data at a graphite backend.
+
+We've written a (docker image)[https://github.com/CastawayLabs/graphite-statsd] that contains statsd + carbon & graphite.
+
+In the future, all request may be logged via redis pub/sub or into the redis database, where a daemon service picks it up.
 
 Recorded parameters:
 
 - IP Address
-- Proxy information (if the user is behind a proxy, an array of ips is available)
 - Request time
 - Target ID
-- Time and date of request
 - Request size (bytes) - (note, in case of TLS, the encrypted request is recorded)
 - Response size (bytes)
 
@@ -103,7 +109,7 @@ Development is Sponsored By NodeGear
 Contributors:
 -------------
 
-- Matej Kramny
+- Matej Kramny <matej@matej.me>
 
 Alternatives:
 -------------
