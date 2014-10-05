@@ -1,15 +1,15 @@
 #!/usr/local/bin/node
 
-var config = require('../lib/config')
-	, bugsnag = require('bugsnag')
-	, redis = require("redis")
+var config = require('../lib/config'),
+	bugsnag = require('bugsnag'),
+	redis = require("redis");
 
 if (!process.env.TEST) {
 	bugsnag.register(config.credentials.bugsnag_key, {});
 }
 
 exports.client = redis.createClient(config.credentials.redis_port, config.credentials.redis_host);
-if (config.production) {
+if (config.redis_key.length > 0) {
 	exports.client.auth(config.redis_key)
 }
 
