@@ -10,7 +10,8 @@
     "async": "latest",
     "bugsnag": "latest",
     "hiredis": "latest",
-    "redis": "latest"
+    "redis": "latest",
+    "lynx": "latest"
   },
   "devDependencies": {
     "should": "latest",
