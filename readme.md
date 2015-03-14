@@ -14,6 +14,7 @@ Run redis:
 docker run -d \
   --name=redisio \
   -v /var/lib/redisio:/var/lib/redis \
+  -p 127.0.0.1:6379:6379 \
   castawaylabs/redis-docker
 ```
 
