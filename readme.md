@@ -3,10 +3,33 @@ dproxy
 
 Fast, Lightweight, Dynamic.
 
-node.js reverse proxy driven by `redis`.
+node.js reverse proxy driven by `redis`
 
-dproxy is faster
-----------------
+Quick start
+-----------
+
+Run redis:
+
+```
+docker run -d \
+  --name=redisio \
+  -v /var/lib/redisio:/var/lib/redis \
+  castawaylabs/redis-docker
+```
+
+Run dproxy:
+
+```
+docker run -d \
+  --name=dproxy \
+  --restart=always \
+  --link redisio:redis \
+  -p 80:80 -p 443:443 \
+  castawaylabs/dproxy
+```
+
+dproxy is fast
+--------------
 
 - It abstracts from http to raw tcp/tls, does minimal parsing. Once it gets the HOST header, it stops caring and just passes on the request.
 - Uses `redis` for dynamic hostname lookup. It has no configuration files (apart from redis config)
@@ -23,8 +46,10 @@ How it works
 Requirements
 ------------
 
-- `node v0.11.x` if you want to use SSL, as SNI was recently introduced into the TLS module.
-- `lib/credentials.js` file (copy from `lib/credentials-test.js`) and customise to your liking
+- Latest node.js (v0.12) or io.js (may work with node v0.11.x -- SSL requires TLS SNI support)
+- Edit `lib/credentials.js` to your requirements
+- Redis server
+- (optional) statsd stack - read below
 
 Features:
 ---------
@@ -37,7 +62,7 @@ Features:
 - [x] HTTP-ready
 - [x] HTTPs-ready
 - [x] TCP, Websocket, TLS support
-- [ ] Request Statistics (read Request Analytics section)
+- [x] Request Statistics (read Request Analytics section)
 
 Basically any tcp requests that share hostname in the first few lines will get properly proxied to the target application.
 
@@ -72,15 +97,13 @@ Refer to the tests for further details, create an issue or contact us.
 Request analytics
 -----------------
 
-> note, this feature is partially done
-
 Request statistics are sent to a `statsd` server.
 
 `dproxy -> statsd -> carbon [-> graphite]`
 
 You can visualise data at a graphite backend.
 
-We've written a (docker image)[https://github.com/CastawayLabs/graphite-statsd] that contains statsd + carbon & graphite.
+We've written a [docker image](https://github.com/CastawayLabs/graphite-statsd) which contains statsd + carbon & graphite.
 
 In the future, all request may be logged via redis pub/sub or into the redis database, where a daemon service picks it up.
 
@@ -95,21 +118,21 @@ Recorded parameters:
 Tests
 -----
 
-Export `TEST` variable into the environment, run a local REDIS server. Be aware it erases its `proxy:...` keys during the test.
+1. Export `TEST` variable into the environment, run a local REDIS server. Be aware it erases its `proxy:...` keys during the test.
+2. Set `PROXY_PORT` and `PROXY_PORTS` environment variables, or be `sudo` as it uses port 80 & 443 by default
+3. Run tests with `mocha`.
 
-Run tests with `mocha`.
+The HTTPs tests will fail if you don't add local certificates (as the HTTPs server doesn't run). Copy `test_files/` certificates, call them `server.crt` and `server.key`.
 
-The HTTPs tests will fail if you don't add local certificates (as the HTTPs server doesn't run).
-
-On google compute instance `n1-standard-1`, the proxy added ~2 ms of delay to each request. This was partially because the redis server was on another instance (ping ~0.7ms).
-
-Development is Sponsored By NodeGear
-------------------------------------
+Developed for [NodeGear](https://nodegear.com)
+----------------------------------------------
 
 Contributors:
 -------------
 
-- Matej Kramny <matej@matej.me>
+- Matej Kramny <matej.kramny@castawaylabs.com>
+- Mark Hendriks <mark.hendriks@castawaylabs.com>
+- Anže Jenšterle <anze.jensterle@castawaylabs.com>
 
 Alternatives:
 -------------
