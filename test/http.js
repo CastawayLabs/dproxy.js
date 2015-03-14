@@ -123,4 +123,20 @@ describe('test http', function() {
 				});
 		});
 	});
+    
+    it('forwards the correct IP in the X-Forwarded-For header', function (done) {
+		client.multi()
+		.hmset('proxy:domain_details_127.0.0.1', 'ssl', false, 'ssl_only', false)
+		.sadd('proxy:domain_members_127.0.0.1', JSON.stringify(member))
+		.exec(function (err) {
+			should(err).be.null;
+
+			request(httpString).get('/')
+				.expect(200)
+                .expect('X-Forwarded-For', '127.0.0.1')
+				.expect('Hello World\n')
+				.end(done);
+		})
+	});
+    
 });
